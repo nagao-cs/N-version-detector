@@ -1,15 +1,16 @@
 from models.yolo_detector import YOLODetector
 from models.fastRCNN_detector import FasterRCNNDetector
-from utils.visualuze import draw_boxes, show_side_by_side
-
+from utils.visualize import draw_boxes, show_side_by_side
+# import torch
 IMAGE_PATH = 'sample.png'
 
 # モデル初期化
 yolo = YOLODetector()
+# yolo = torch.hub.load('ultralytics/yolov5', 'yolov5s')  
 fasterrcnn = FasterRCNNDetector()
 
 # 推論
-yolo_result = yolo.predict(IMAGE_PATH).to_dict('records')
+yolo_result = yolo.predict(IMAGE_PATH)
 fasterrcnn_result = fasterrcnn.predict(IMAGE_PATH)
 
 # 描画

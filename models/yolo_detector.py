@@ -1,19 +1,26 @@
-import sys
-import os
-from pathlib import Path
-
-# yolov5 ディレクトリを Python モジュール検索パスに追加
-YOLO_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../yolov5'))
-if YOLO_PATH not in sys.path:
-    sys.path.append(YOLO_PATH)
-
-import torch
+from ultralytics import YOLO
 
 class YOLODetector:
-    def __init__(self, weights='yolov5s.pt'):
-        # yolov5 フォルダを直接使うことで models.common の import エラーを回避
-        self.model = torch.hub.load(YOLO_PATH, 'custom', path=weights, source='local')
+    def __init__(self):
+        self.model = YOLO('yolov8s.pt')  # 事前にダウンロード必要
 
     def predict(self, image_path):
         results = self.model(image_path)
-        return results.pandas().xyxy[0].to_dict('records')
+        result = results[0]  # YOLOv8は1画像でも list[Results] が返る
+        boxes = result.boxes
+
+        # 各Box情報を dict にして返す
+        output = []
+        for box in boxes:
+            b = box.xyxy[0].tolist()  # [x1, y1, x2, y2]
+            conf = box.conf[0].item()
+            cls = int(box.cls[0].item())
+            output.append({
+                "xmin": b[0],
+                "ymin": b[1],
+                "xmax": b[2],
+                "ymax": b[3],
+                "confidence": conf,
+                "label": str(cls)
+            })
+        return output
