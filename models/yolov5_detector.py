@@ -16,9 +16,9 @@ COCO_LABELS = [
     "hair drier", "toothbrush"
 ]
 
-class YOLODetector:
-    def __init__(self):
-        self.model = YOLO('yolov8s.pt')  # 事前にダウンロード必要
+class YOLOv5Detector:
+    def __init__(self, model_path='yolov5s.pt'):
+        self.model = YOLO(model_path)
 
     def predict(self, image_path):
         results = self.model(image_path)
@@ -42,3 +42,5 @@ class YOLODetector:
                 "label": label_name
             })
         return output
+
+

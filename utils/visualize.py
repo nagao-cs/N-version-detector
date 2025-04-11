@@ -17,3 +17,4 @@ def show_side_by_side(img1, img2, title1='Model A', title2='Model B'):
     axs[1].imshow(cv2.cvtColor(img2, cv2.COLOR_BGR2RGB))
     axs[1].set_title(title2)
     plt.show()
+    plt.savefig('result.png')
