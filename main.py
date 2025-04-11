@@ -1,12 +1,11 @@
 from models.yolo_detector import YOLODetector
 from models.fastRCNN_detector import FasterRCNNDetector
 from utils.visualize import draw_boxes, show_side_by_side
-# import torch
+
 IMAGE_PATH = 'sample.png'
 
 # モデル初期化
 yolo = YOLODetector()
-# yolo = torch.hub.load('ultralytics/yolov5', 'yolov5s')  
 fasterrcnn = FasterRCNNDetector()
 
 # 推論
@@ -19,3 +18,4 @@ img_fasterrcnn = draw_boxes(IMAGE_PATH, fasterrcnn_result, color=(0, 0, 255), la
 
 # 表示
 show_side_by_side(img_yolo, img_fasterrcnn)
+
