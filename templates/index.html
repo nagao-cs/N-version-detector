@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+    <title>N-Version Detector</title>
+</head>
+<body>
+    <h2>画像をアップロードして物体検出</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="image">
+        <input type="submit" value="検出">
+    </form>
+
+    {% if result_img %}
+        <h3>一致検出結果：</h3>
+        <img src="{{ url_for('static_file', filename=result_img) }}">
+    {% endif %}
+</body>
+</html>
