@@ -7,13 +7,12 @@
 - 画像のアップロードと物体検出
 - 複数の物体検出モデルの同時実行
 - 検出結果の可視化と比較
-- モデル間の検出結果の一致度分析
 
 ## インストール方法
 1. リポジトリをクローン
 ```bash
-git clone [repository_url]
-cd N_version_Detector
+git clone https://github.com/nagao-cs/N-version-detector/
+cd N_version_detector
 ```
 
 2. 仮想環境の作成と有効化
@@ -33,7 +32,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-2. Webブラウザで `http://localhost:5000` にアクセス
+2. ローカルホストにアクセス
 3. 画像をアップロードして物体検出を実行
 
 ## 必要な環境
