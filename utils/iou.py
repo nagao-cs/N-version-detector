@@ -15,14 +15,25 @@ def compute_iou(box1, box2):
     iou = inter_area / float(box1_area + box2_area - inter_area)
     return iou
 
-def match_detections(list1, list2, iou_threshold=0.5):
+def match_detections(list1, list2, list3, iou_threshold=0.5):
     matches = []
-    for det1 in list1:
-        for det2 in list2:
-            print(f"det1: {det1['label']}, det2: {det2['label']}")
-            if det1['label'] == det2['label']:
-                iou = compute_iou(det1, det2)
-                print(f"iou: {iou:.2f}, {det1['label']}, {det2['label']}")
-                if iou >= iou_threshold:
-                    matches.append((det1, det2, iou))
+    for box1 in list1:
+        for box2 in list2:
+            if box1['label'] == box2['label']:
+                for box3 in list3:
+                    if box1['label'] == box3['label']:
+                        iou_1 = compute_iou(box1, box2)
+                        iou_2 = compute_iou(box1, box3)
+                        iou_3 = compute_iou(box2, box3)
+                        if iou_1 > iou_threshold and iou_2 > iou_threshold and iou_3 > iou_threshold:
+                            iou = (iou_1 + iou_2 + iou_3) / 3
+                            box = {
+                                "xmin": (box1['xmin'] + box2['xmin'] + box3['xmin']) / 3,
+                                "ymin": (box1['ymin'] + box2['ymin'] + box3['ymin']) / 3,
+                                "xmax": (box1['xmax'] + box2['xmax'] + box3['xmax']) / 3,
+                                "ymax": (box1['ymax'] + box2['ymax'] + box3['ymax']) / 3,
+                                "confidence": (box1['confidence'] + box2['confidence'] + box3['confidence']) / 3,
+                                "label": box1['label']
+                            }
+                            matches.append((box, iou))
     return matches

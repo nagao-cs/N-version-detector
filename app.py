@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, send_from_directory
 from models.yolov8_detector import YOLOv8Detector
 from models.yolov5_detector import YOLOv5Detector
-from models.fastRCNN_detector import FasterRCNNDetector
-from models.SSD_detector import SSDDetector
+# from models.fastRCNN_detector import FasterRCNNDetector
+# from models.SSD_detector import SSDDetector
 from utils.visualize import draw_boxes, show_side_by_side
 from utils.iou import match_detections
 import os
@@ -12,7 +12,7 @@ app = Flask(__name__)
 # モデル初期化
 yolov8 = YOLOv8Detector()
 yolov5 = YOLOv5Detector()
-ssd = SSDDetector()
+yolov5_2 = YOLOv5Detector()
 
 UPLOAD_FOLDER = 'static'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -28,8 +28,9 @@ def index():
         # 検出
         yolov8_result = yolov8.predict(path)
         yolov5_result = yolov5.predict(path)
-        ssd_result = ssd.predict(path)
-        matches = match_detections(yolov8_result, yolov5_result)
+        yolov5_2_result = yolov5_2.predict(path)
+        print("YOLOv8 Result:", yolov8_result)
+        matches = match_detections(yolov8_result, yolov5_result, yolov5_2_result)
         matched_boxes = [m[0] for m in matches]
 
         # 可視化 & 保存
