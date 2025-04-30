@@ -9,6 +9,10 @@
         <input type="file" name="image">
         <input type="submit" value="検出">
     </form>
+    <!-- 履歴ページへ移動するボタン -->
+    <form action="{{ url_for('history') }}" method="GET">
+        <input type="submit" value="検出履歴を見る">
+    </form>
 
     {% if result_img %}
         <h3>一致検出結果：</h3>

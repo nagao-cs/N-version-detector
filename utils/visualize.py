@@ -7,6 +7,7 @@ def draw_boxes(image_path, detections, color=(255, 0, 0), label=''):
         x1, y1, x2, y2 = int(det['xmin']), int(det['ymin']), int(det['xmax']), int(det['ymax'])
         cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
         text = f"{label}:{det.get('label', '')}"
+        #bboxの10px上にラベル(物体のクラス)を表示
         cv2.putText(image, text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
     return image
 
