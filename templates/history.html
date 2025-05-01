@@ -14,5 +14,19 @@
       <p>履歴がありません。</p>
     {% endfor %}
   </ul>
+  <ul>
+    {% for r in results %}
+      <li>
+        <img src="{{ url_for('static_file', filename=r.image_filename) }}" width="200">
+        {{ r.created_at.strftime("%Y-%m-%d %H:%M:%S") }}
+  
+        <!-- 削除ボタン -->
+        <form method="POST" action="{{ url_for('delete', id=r.id) }}" style="display:inline;">
+          <input type="submit" value="削除" onclick="return confirm('本当に削除しますか？');">
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+  
 </body>
 </html>

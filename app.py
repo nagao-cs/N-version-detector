@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, send_from_directory, redirect
+
 from models.yolov8_detector import YOLOv8Detector
 from models.yolov5_detector import YOLOv5Detector
 # from models.fastRCNN_detector import FasterRCNNDetector
@@ -68,6 +69,22 @@ def static_file(filename):
 def history():
     results = DetectionResult.query.order_by(DetectionResult.created_at.desc()).all()
     return render_template('history.html', results=results)
+
+@app.route('/delete/<int:id>', methods=['POST'])
+def delete(id):
+    record = DetectionResult.query.get_or_404(id)
+
+    # 画像ファイルも削除
+    image_path = os.path.join(app.config['UPLOAD_FOLDER'], record.image_filename)
+    if os.path.exists(image_path):
+        os.remove(image_path)
+
+    # DBから削除
+    db.session.delete(record)
+    db.session.commit()
+
+    return redirect('/history')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
