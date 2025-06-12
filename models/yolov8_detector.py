@@ -3,7 +3,7 @@ from .coco_labels import COCO_LABELS
 
 class YOLOv8Detector:
     def __init__(self):
-        self.model = YOLO('yolov8s.pt')  # 事前にダウンロード必要
+        self.model = YOLO('yolov8s.pt')
 
     def predict(self, image_path):
         results = self.model(image_path)
