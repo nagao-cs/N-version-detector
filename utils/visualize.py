@@ -1,8 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 
-def draw_boxes(image_path, detections, color=(255, 0, 0), label=''):
-    image = cv2.imread(image_path)
+def draw_boxes(image, detections, color=(255, 0, 0), label=''):
     for det in detections:
         x1, y1, x2, y2 = int(det['xmin']), int(det['ymin']), int(det['xmax']), int(det['ymax'])
         cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
