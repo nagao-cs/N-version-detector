@@ -1,0 +1,11 @@
+/__pycache__
+/input
+/instance
+/output
+/static
+/yolo*
+/models/__pycache__
+/models/fastRCNN_detector.py
+/models/SSD_detector.py
+/venv
+/utils/__pycache__
