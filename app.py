@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, send_from_directory, redirect
-
 from models.yolov8_detector import YOLOv8Detector
 from models.yolov5_detector import YOLOv5Detector
 # from models.fastRCNN_detector import FasterRCNNDetector
@@ -9,6 +8,7 @@ from utils.iou import match_detections
 import os
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import cv2
 
 
 
@@ -24,46 +24,53 @@ class DetectionResult(db.Model):
     
 # モデル初期化
 yolov8 = YOLOv8Detector()
-yolov5 = YOLOv5Detector()
-yolov5_2 = YOLOv5Detector()
 
-UPLOAD_FOLDER = 'static'
+UPLOAD_FOLDER = 'input'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+OUPUT_FOLDER = 'output'
+os.makedirs(OUPUT_FOLDER, exist_ok=True)
+app.config['OUTPUT_FOLDER'] = OUPUT_FOLDER
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         # アップロード画像の取得
         file = request.files['image']
-        path = os.path.join(app.config['UPLOAD_FOLDER'], 'input.png')
-        file.save(path)
+        num_version = int(request.form["num_version"])
+        dt_now = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        input_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{dt_now}.png')
+        file.save(input_path)
+        image = cv2.imread(input_path)
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray_image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)
+        reverse_image = cv2.bitwise_not(image)
 
         # 検出
-        yolov8_result = yolov8.predict(path)
-        yolov5_result = yolov5.predict(path)
-        yolov5_2_result = yolov5_2.predict(path)
-        print("YOLOv8 Result:", yolov8_result)
-        matches = match_detections(yolov8_result, yolov5_result, yolov5_2_result)
-        matched_boxes = [m[0] for m in matches]
+        normal_result = yolov8.predict(image)
+        gray_result = yolov8.predict(gray_image)
+        reverse_result = yolov8.predict(reverse_image)
+        
+        matched_bboxes = match_detections(normal_result, gray_result, reverse_result)
+        matched_boxes = [bbox[0] for bbox in matched_bboxes]
 
         # 可視化 & 保存
-        output_img = draw_boxes(path, matched_boxes, color=(0, 255, 0), label='match')
-        output_path = os.path.join(app.config['UPLOAD_FOLDER'], 'output.png')
-        import cv2
+        output_img = draw_boxes(image, matched_boxes, color=(0, 255, 0), label='match')
+        output_path = os.path.join(app.config['OUTPUT_FOLDER'], f'{dt_now}.png')
         cv2.imwrite(output_path, output_img)
         
         # DBに保存
-        new_record = DetectionResult(image_filename='input.jpg')  # ファイル名は動的でもOK
+        new_record = DetectionResult(image_filename=f'{dt_now}.png')
         db.session.add(new_record)
         db.session.commit()
         
-        return render_template('index.html', result_img='output.png')
+        return render_template('index.html', result_img=f"{dt_now}.png")
 
     return render_template('index.html', result_img=None)
 
-@app.route('/static/<filename>')
-def static_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+@app.route('/output/<filename>')
+def output(filename):
+    return send_from_directory(app.config['OUTPUT_FOLDER'], filename)
 
 @app.route('/history')
 def history():
