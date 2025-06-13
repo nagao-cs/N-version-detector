@@ -28,6 +28,9 @@ yolov8 = YOLOv8Detector()
 UPLOAD_FOLDER = 'input'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+PROCESSED_FOLDER = 'processed'
+os.makedirs(PROCESSED_FOLDER, exist_ok=True)
+app.config['PROCESSED'] = PROCESSED_FOLDER
 OUPUT_FOLDER = 'output'
 os.makedirs(OUPUT_FOLDER, exist_ok=True)
 app.config['OUTPUT_FOLDER'] = OUPUT_FOLDER
@@ -38,24 +41,42 @@ def index():
         # アップロード画像の取得
         file = request.files['image']
         num_version = int(request.form["num_version"])
-        dt_now = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        dt_now = datetime.now().strftime('%Y%m%d_%H%M%S')
         input_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{dt_now}.png')
         file.save(input_path)
         image = cv2.imread(input_path)
-        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        gray_image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)
-        reverse_image = cv2.bitwise_not(image)
+        # グレースケール画像
+        if num_version >= 2:
+            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            gray_image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)
+            gray_path = os.path.join(app.config['PROCESSED'], f'{dt_now}_gray.png')
+            cv2.imwrite(gray_path, gray_image)
+
+        # 色を反転した画像
+        if num_version >= 3:
+            reverse_image = cv2.bitwise_not(image)
+            reverse_path = os.path.join(app.config['PROCESSED'], f'{dt_now}_reverse.png')
+            cv2.imwrite(reverse_path, reverse_image)
 
         # 検出
         normal_result = yolov8.predict(image)
-        gray_result = yolov8.predict(gray_image)
-        reverse_result = yolov8.predict(reverse_image)
+        if num_version >= 2:
+            gray_result = yolov8.predict(gray_image)
+        if num_version >= 3:
+            reverse_result = yolov8.predict(reverse_image)
+
+        # マッチング
+        if num_version == 1:
+            matched_bboxes = match_detections(normal_result)
+        elif num_version == 2:
+            matched_bboxes = match_detections(normal_result, gray_result)
+        elif num_version >= 3:
+            matched_bboxes = match_detections(normal_result, gray_result, reverse_result)
         
-        matched_bboxes = match_detections(normal_result, gray_result, reverse_result)
-        matched_boxes = [bbox[0] for bbox in matched_bboxes]
+        matched_boxes = [bbox for bbox in matched_bboxes]
 
         # 可視化 & 保存
-        output_img = draw_boxes(image, matched_boxes, color=(0, 255, 0), label='match')
+        output_img = draw_boxes(image, matched_boxes)
         output_path = os.path.join(app.config['OUTPUT_FOLDER'], f'{dt_now}.png')
         cv2.imwrite(output_path, output_img)
         
