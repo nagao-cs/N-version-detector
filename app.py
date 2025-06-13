@@ -3,7 +3,7 @@ from models.yolov8_detector import YOLOv8Detector
 from models.yolov5_detector import YOLOv5Detector
 # from models.fastRCNN_detector import FasterRCNNDetector
 # from models.SSD_detector import SSDDetector
-from utils.visualize import draw_boxes, show_side_by_side
+from utils.visualize import draw_match_bboxes, draw_bboxes
 from utils.iou import match_detections
 import os
 from flask_sqlalchemy import SQLAlchemy
@@ -60,10 +60,16 @@ def index():
 
         # 検出
         normal_result = yolov8.predict(image)
+        normal_bbox_path = os.path.join(app.config['OUTPUT_FOLDER'], f'{dt_now}_normal.png')
+        cv2.imwrite(normal_bbox_path, draw_bboxes(image, normal_result))
         if num_version >= 2:
             gray_result = yolov8.predict(gray_image)
+            gray_bbox_path = os.path.join(app.config['OUTPUT_FOLDER'], f'{dt_now}_gray.png')
+            cv2.imwrite(gray_bbox_path, draw_bboxes(gray_image, gray_result))
         if num_version >= 3:
             reverse_result = yolov8.predict(reverse_image)
+            reverse_bbox_path = os.path.join(app.config['OUTPUT_FOLDER'], f'{dt_now}_reverse.png')
+            cv2.imwrite(reverse_bbox_path, draw_bboxes(reverse_image, reverse_result))
 
         # マッチング
         if num_version == 1:
@@ -76,7 +82,7 @@ def index():
         matched_boxes = [bbox for bbox in matched_bboxes]
 
         # 可視化 & 保存
-        output_img = draw_boxes(image, matched_boxes)
+        output_img = draw_match_bboxes(image, matched_boxes)
         output_path = os.path.join(app.config['OUTPUT_FOLDER'], f'{dt_now}.png')
         cv2.imwrite(output_path, output_img)
         
@@ -85,7 +91,13 @@ def index():
         db.session.add(new_record)
         db.session.commit()
         
-        return render_template('index.html', result_img=f"{dt_now}.png")
+        return render_template(
+            'index.html',
+            result_img_normal=f"{dt_now}_normal.png",
+            result_img_gray=f"{dt_now}_gray.png" if num_version >= 2 else None,
+            result_img_reverse=f"{dt_now}_reverse.png" if num_version >= 3 else None,
+            result_img=f'{dt_now}.png'
+        )
 
     return render_template('index.html', result_img=None)
 
