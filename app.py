@@ -38,30 +38,34 @@ app.config['OUTPUT_FOLDER'] = OUPUT_FOLDER
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        # アップロード画像の取得
-        file = request.files['image']
         num_version = int(request.form["num_version"])
         dt_now = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # アップロード画像の取得
+        file = request.files['image']
         input_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{dt_now}.png')
         file.save(input_path)
-        image = cv2.imread(input_path)
+        
+        if num_version >= 1:
+            normal_image = cv2.imread(input_path)
+            normal_path = os.path.join(app.config['PROCESSED'], f'{dt_now}_normal.png')
+            cv2.imwrite(normal_path, normal_image)
         # グレースケール画像
         if num_version >= 2:
-            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            gray_image = cv2.cvtColor(normal_image, cv2.COLOR_BGR2GRAY)
             gray_image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)
             gray_path = os.path.join(app.config['PROCESSED'], f'{dt_now}_gray.png')
             cv2.imwrite(gray_path, gray_image)
-
         # 色を反転した画像
         if num_version >= 3:
-            reverse_image = cv2.bitwise_not(image)
+            reverse_image = cv2.bitwise_not(normal_image)
             reverse_path = os.path.join(app.config['PROCESSED'], f'{dt_now}_reverse.png')
             cv2.imwrite(reverse_path, reverse_image)
 
         # 検出
-        normal_result = yolov8.predict(image)
+        normal_result = yolov8.predict(normal_image)
         normal_bbox_path = os.path.join(app.config['OUTPUT_FOLDER'], f'{dt_now}_normal.png')
-        cv2.imwrite(normal_bbox_path, draw_bboxes(image, normal_result))
+        cv2.imwrite(normal_bbox_path, draw_bboxes(normal_image, normal_result))
         if num_version >= 2:
             gray_result = yolov8.predict(gray_image)
             gray_bbox_path = os.path.join(app.config['OUTPUT_FOLDER'], f'{dt_now}_gray.png')
@@ -82,6 +86,7 @@ def index():
         matched_boxes = [bbox for bbox in matched_bboxes]
 
         # 可視化 & 保存
+        image = cv2.imread(input_path)
         output_img = draw_match_bboxes(image, matched_boxes)
         output_path = os.path.join(app.config['OUTPUT_FOLDER'], f'{dt_now}.png')
         cv2.imwrite(output_path, output_img)
