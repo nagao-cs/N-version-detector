@@ -6,7 +6,7 @@ from models.yolov5_detector import YOLOv5Detector
 from utils.visualize import draw_match_bboxes, draw_bboxes
 from utils.iou import match_detections
 import os
-from flask_sqlalchemy import SQLAlchemy
+from db_model import db, DetectionResult
 from datetime import datetime
 import cv2
 
@@ -15,13 +15,8 @@ import cv2
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///detections.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-# データモデル
-class DetectionResult(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    image_filename = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+db.init_app(app)
+
 # モデル初期化
 yolov8 = YOLOv8Detector()
 
@@ -92,7 +87,14 @@ def index():
         cv2.imwrite(output_path, output_img)
         
         # DBに保存
-        new_record = DetectionResult(image_filename=f'{dt_now}.png')
+        new_record = DetectionResult(
+            id = dt_now,
+            # original_image = f"{dt_now}.png",
+            # result_img_normal = f"{dt_now}_normal.png" if num_version >= 1 else None,
+            # result_img_gray = f"{dt_now}_gray.png" if num_version >= 2 else None,
+            # result_img_reverse = f"{dt_now}_reverse.png" if num_version >= 3 else None,
+            matched_result = f"{dt_now}.png",
+        )
         db.session.add(new_record)
         db.session.commit()
         
@@ -108,12 +110,13 @@ def index():
 
 @app.route('/output/<filename>')
 def output(filename):
+    print(filename)
     return send_from_directory(app.config['OUTPUT_FOLDER'], filename)
 
 @app.route('/history')
 def history():
-    results = DetectionResult.query.order_by(DetectionResult.created_at.desc()).all()
-    return render_template('history.html', results=results)
+    records = DetectionResult.query.order_by(DetectionResult.id.desc()).all()
+    return render_template('history.html', records=records)
 
 @app.route('/delete/<int:id>', methods=['POST'])
 def delete(id):
